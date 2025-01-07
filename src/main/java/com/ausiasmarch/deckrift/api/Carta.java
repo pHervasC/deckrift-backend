@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ausiasmarch.deckrift.entity.CartaEntity;
+import com.ausiasmarch.deckrift.repository.CartaRepository;
 import com.ausiasmarch.deckrift.service.CartaService;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*", maxAge = 3600)
@@ -28,11 +30,14 @@ public class Carta {
 
     @Autowired
     CartaService oCartaService;
+    
+    @Autowired
+    private CartaRepository oCartaRepository;
 
     // Obtener todas las cartas (con filtro opcional)
     @GetMapping("")
     public ResponseEntity<Page<CartaEntity>> getPage(
-            Pageable oPageable,
+            Pageable oPageable,  
             @RequestParam Optional<String> filter) {
         return new ResponseEntity<>(oCartaService.findAll(oPageable, filter), HttpStatus.OK);
     }
@@ -60,5 +65,14 @@ public class Carta {
     public ResponseEntity<CartaEntity> update(@PathVariable Long id, @RequestBody CartaEntity oCartaEntity) {
         return new ResponseEntity<>(oCartaService.update(id, oCartaEntity), HttpStatus.OK);
     }
+
+    @GetMapping("/{id}/imagen")
+    public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long id) {
+        CartaEntity oCartaEntity = oCartaRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Carta no encontrada"));
+    return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_PNG)
+            .body(oCartaEntity.getImagen());
+}
 
 }

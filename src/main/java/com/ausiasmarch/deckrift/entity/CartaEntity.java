@@ -23,6 +23,9 @@ public class CartaEntity {
     @Size(max = 50)
     private String rareza;
 
+    @Lob
+    private byte[] imagen;
+
     public CartaEntity() {
     }
 
@@ -70,4 +73,13 @@ public class CartaEntity {
     public void setRareza(String rareza) {
         this.rareza = rareza;
     }
+
+    public byte[] getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(byte[] imagen) {
+        this.imagen = imagen;
+    }
+
 }

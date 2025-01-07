@@ -11,4 +11,8 @@ public interface CartaRepository extends JpaRepository<CartaEntity, Long> {
 
     @Query(value = "SELECT * FROM cartas WHERE nombre LIKE %:nombre%", nativeQuery = true)
     Page<CartaEntity> findByNombreContaining(String nombre, Pageable oPageable);
+
+    @Query(value = "SELECT * FROM cartas ORDER BY RAND() LIMIT 1", nativeQuery = true)
+    CartaEntity GetRandomCard();
+
 }

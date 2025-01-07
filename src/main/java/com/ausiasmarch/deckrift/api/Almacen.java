@@ -34,5 +34,27 @@ public class Almacen {
     public ResponseEntity<Page<AlmacenEntity>> getPage(Pageable oPageable, @RequestParam Optional<Long> filter) {
         return new ResponseEntity<>(oAlmacenService.findByUsuarioId(oPageable, filter), HttpStatus.OK);
     }
-    
+
+    // Agregar cartas a usuario
+    @PostMapping("/addCartas/{idUsuario}")
+    public ResponseEntity<String> addCartas(
+        @PathVariable Long idUsuario,
+        @RequestParam(defaultValue = "5") int cantidad) {
+        try {
+        oAlmacenService.AñadirCartasAUsuario(idUsuario, cantidad);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Cartas añadidas correctamente al usuario con ID: " + idUsuario);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error inesperado: " + e.getMessage());
+        }
+    }
+
+    // Ver cartas de cada usuario
+    @GetMapping("/cartas/{idUsuario}")
+    public ResponseEntity<Page<AlmacenEntity>> getCartasByUsuarioId(Pageable oPageable, @PathVariable Long idUsuario) {
+        return new ResponseEntity<>(oAlmacenService.findByUsuarioId(oPageable, Optional.of(idUsuario)), HttpStatus.OK);
+    }
 }

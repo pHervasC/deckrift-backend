@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 
 import com.ausiasmarch.deckrift.entity.AlmacenEntity;
 import com.ausiasmarch.deckrift.entity.CartaEntity;
+import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.repository.AlmacenRepository;
+import com.ausiasmarch.deckrift.repository.CartaRepository;
+import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 
 @Service
 public class AlmacenService implements ServiceInterface<AlmacenEntity> {
@@ -21,11 +24,18 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
     @Autowired
     RandomService oRandomService;
 
+    @Autowired
+    private CartaRepository oCartaRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
    //Crear
 
     public AlmacenEntity create(AlmacenEntity oAlmacenEntity) {
         return oAlmacenRepository.save(oAlmacenEntity);
     }
+
 
     //Delete
     public Long delete(Long id) {
@@ -89,5 +99,24 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
         return oAlmacenRepository.findById((long) oRandomService.getRandomInt(1, (int) (long) this.count())).get();
     }
 
-    
+    public void AñadirCartasAUsuario(Long idUsuario, int cantidad) {
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
+
+        for (int i = 0; i < cantidad; i++) {
+            CartaEntity carta = oCartaRepository.GetRandomCard();
+            AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(idUsuario, carta.getId());
+
+            if (almacenExistente != null) {
+                almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
+                oAlmacenRepository.save(almacenExistente);
+            } else {
+                AlmacenEntity almacen = new AlmacenEntity();
+                almacen.setUsuario(usuario);
+                almacen.setCarta(carta);
+                almacen.setCantidad(1);
+                oAlmacenRepository.save(almacen);
+            }
+    }
+    }
 }

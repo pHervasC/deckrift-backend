@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AlmacenRepository extends JpaRepository<AlmacenEntity, Long> {
     
     Page<AlmacenEntity> findByUsuarioId( Long usuarioId, Pageable oPageable);
+
+    AlmacenEntity findByUsuarioIdAndCartaId(Long usuarioId, Long cartaId);
 }
