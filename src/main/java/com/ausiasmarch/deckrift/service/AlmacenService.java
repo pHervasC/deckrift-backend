@@ -48,13 +48,10 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
                 .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
     }
 
-    public Page<AlmacenEntity> findByUsuarioId(Pageable oPageable, Optional<Long> filter) {
-        if (filter.isPresent()) {
-            return oAlmacenRepository.findByUsuarioId(filter.get(), oPageable);
-        } else {
-            return oAlmacenRepository.findAll(oPageable);
-        }
+    public Page<AlmacenEntity> findByUsuarioId(Long usuarioId, Pageable pageable) {
+        return oAlmacenRepository.findByUsuarioIdNative(usuarioId, pageable);
     }
+    
 
     public AlmacenEntity get(Long id) {
         return oAlmacenRepository.findById(id)

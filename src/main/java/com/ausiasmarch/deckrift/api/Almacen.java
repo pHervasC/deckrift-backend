@@ -29,12 +29,6 @@ public class Almacen {
     @Autowired
     AlmacenService oAlmacenService;
 
-    // Obtener todas las cartas
-    @GetMapping("")
-    public ResponseEntity<Page<AlmacenEntity>> getPage(Pageable oPageable, @RequestParam Optional<Long> filter) {
-        return new ResponseEntity<>(oAlmacenService.findByUsuarioId(oPageable, filter), HttpStatus.OK);
-    }
-
     // Agregar cartas a usuario
     @PostMapping("/addCartas/{idUsuario}")
     public ResponseEntity<String> addCartas(
@@ -53,8 +47,14 @@ public class Almacen {
     }
 
     // Ver cartas de cada usuario
-    @GetMapping("/cartas/{idUsuario}")
-    public ResponseEntity<Page<AlmacenEntity>> getCartasByUsuarioId(Pageable oPageable, @PathVariable Long idUsuario) {
-        return new ResponseEntity<>(oAlmacenService.findByUsuarioId(oPageable, Optional.of(idUsuario)), HttpStatus.OK);
+    @GetMapping("/cartas/{usuarioId}")
+    public ResponseEntity<Page<AlmacenEntity>> getCartasByUsuarioId(
+            @PathVariable Long usuarioId,
+            Pageable pageable
+    ) {
+        Page<AlmacenEntity> page = oAlmacenService.findByUsuarioId(usuarioId, pageable);
+        return ResponseEntity.ok(page);
     }
+    
+
 }
