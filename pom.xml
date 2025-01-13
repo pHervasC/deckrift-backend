@@ -58,7 +58,22 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-	
+		<dependency>
+    		<groupId>com.google.api-client</groupId>
+    		<artifactId>google-api-client</artifactId>
+    		<version>1.33.2</version>
+		</dependency>
+		<dependency>
+    		<groupId>com.google.http-client</groupId>
+   			<artifactId>google-http-client-jackson2</artifactId>
+    		<version>1.42.2</version> <!-- O la versión más reciente -->
+		</dependency>
+		<dependency>
+    		<groupId>com.auth0</groupId>
+   			<artifactId>java-jwt</artifactId>
+    		<version>4.4.0</version> <!-- Asegúrate de usar la versión más reciente -->
+		</dependency>
+
 	</dependencies>
 
 	<build>
