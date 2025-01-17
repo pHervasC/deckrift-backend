@@ -21,9 +21,10 @@ public class UsuarioEntity {
     @Column(unique = true)
     private String correo;
 
-    @NotNull
+    @Column(nullable = true) 
     @Size(min = 6, max = 255)
     private String password;
+
 
     public UsuarioEntity() {
     }
@@ -72,5 +73,6 @@ public class UsuarioEntity {
     public void setPassword(String password) {
         this.password = password;
     }
+    
 
 }
