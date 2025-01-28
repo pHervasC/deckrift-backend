@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.ausiasmarch.deckrift.entity.CartaEntity;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
+import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
 import com.ausiasmarch.deckrift.repository.CartaRepository;
-
 
 @Service
 public class CartaService implements ServiceInterface<CartaEntity> {
@@ -21,6 +21,8 @@ public class CartaService implements ServiceInterface<CartaEntity> {
     @Autowired
     RandomService oRandomService;
 
+    AuthService oAuthService;
+
     // Obtener una carta por ID
     public CartaEntity findById(Long id) {
         return oCartaRepository.findById(id)
@@ -29,16 +31,26 @@ public class CartaService implements ServiceInterface<CartaEntity> {
 
     // Obtener todas las cartas con paginación (y filtro opcional)
     public Page<CartaEntity> findAll(Pageable oPageable, Optional<String> filter) {
-        if (filter.isPresent()) {
-            return oCartaRepository.findByNombreContaining(filter.get(), oPageable);
+        if (oAuthService.isAdmin()) {
+            if (filter.isPresent()) {
+                return oCartaRepository
+                        .findByNombreContaining(
+                                filter.get(), oPageable);
+            } else {
+                return oCartaRepository.findAll(oPageable);
+            }
         } else {
-            return oCartaRepository.findAll(oPageable);
+            throw new UnauthorizedAccessException("No tienes permisos para ver las Cartas");
         }
     }
 
     // Crear una nueva carta
     public CartaEntity create(CartaEntity oCartaEntity) {
-        return oCartaRepository.save(oCartaEntity);
+        if (oAuthService.isAdmin()) {
+            return oCartaRepository.save(oCartaEntity);
+        } else {
+            throw new UnauthorizedAccessException("No tienes permisos para crear el usuario");
+        }
     }
 
     // Actualizar una carta existente
@@ -61,13 +73,17 @@ public class CartaService implements ServiceInterface<CartaEntity> {
 
     // Contar todas las cartas
     public Long count() {
-        return oCartaRepository.count();
+        if (!oAuthService.isAdmin()) {
+            throw new UnauthorizedAccessException("No tienes permisos para contar los usuarios");
+        } else {
+            return oCartaRepository.count();
+        }
     }
 
     // Eliminar todas las cartas
     public Long deleteAll() {
         oCartaRepository.deleteAll();
-                return this.count();
+        return this.count();
     }
 
     public CartaEntity update(CartaEntity oCartaEntity) {
@@ -85,23 +101,27 @@ public class CartaService implements ServiceInterface<CartaEntity> {
     }
 
     public Page<CartaEntity> getPage(Pageable oPageable, Optional<String> filter) {
-        if (filter.isPresent()) {
-            return oCartaRepository
-                    .findByNombreContaining(
-                            filter.get(), oPageable);
+        if (oAuthService.isAdmin()) {
+            if (filter.isPresent()) {
+                return oCartaRepository
+                        .findByNombreContaining(
+                                filter.get(), oPageable);
+            } else {
+                return oCartaRepository.findAll(oPageable);
+            }
         } else {
-            return oCartaRepository.findAll(oPageable);
+            throw new UnauthorizedAccessException("No tienes permisos para ver las Cartas");
         }
     }
 
     public CartaEntity get(Long id) {
         return oCartaRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
     }
 
     public CartaEntity randomSelection() {
         return oCartaRepository.findById((long) oRandomService.getRandomInt(1, (int) (long) this.count())).get();
-                
+
     }
 
 }

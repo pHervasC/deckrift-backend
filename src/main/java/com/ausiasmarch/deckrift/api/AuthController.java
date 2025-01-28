@@ -4,12 +4,14 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
 import java.util.Map;
-import java.util.Optional;
+
 
 import com.ausiasmarch.deckrift.entity.AuthResponseEntity;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 import com.ausiasmarch.deckrift.service.GoogleTokenVerifierService;
+
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
