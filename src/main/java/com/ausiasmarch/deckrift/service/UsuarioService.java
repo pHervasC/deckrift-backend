@@ -7,9 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ausiasmarch.deckrift.entity.TipousuarioEntity;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
+import com.ausiasmarch.deckrift.repository.TipoUsuarioRepository;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 
 @Service
@@ -21,7 +23,11 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
     @Autowired
     RandomService oRandomService;
 
+    @Autowired
     AuthService oAuthService;
+
+    @Autowired
+    private TipoUsuarioRepository tipousuarioRepository;
 
     public UsuarioEntity getByEmail(String email) {
         UsuarioEntity oUsuarioEntity = oUsuarioRepository.findByCorreo(email)
@@ -56,7 +62,6 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
     public UsuarioEntity get(Long id) {
         return oUsuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
     }
 
     public Long count() {
@@ -73,32 +78,36 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
 
     // Crear un nuevo usuario
     public UsuarioEntity create(UsuarioEntity oUsuarioEntity) {
+            oUsuarioEntity.setTipousuario(tipousuarioRepository.findById(2L)
+                    .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
             return oUsuarioRepository.save(oUsuarioEntity);
-    }
+        }
 
     // Actualizar un usuario existente
     public UsuarioEntity update(UsuarioEntity oUsuarioEntity) {
-        if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(oUsuarioEntity.getId())) {
-            UsuarioEntity oUsuarioEntityFromDatabase = oUsuarioRepository.findById(oUsuarioEntity.getId()).get();
-            if (oUsuarioEntity.getNombre() != null) {
-                oUsuarioEntityFromDatabase.setNombre(oUsuarioEntity.getNombre());
-            }
-            if (oUsuarioEntity.getCorreo() != null) {
-                oUsuarioEntityFromDatabase.setCorreo(oUsuarioEntity.getCorreo());
-            }
-            if (oUsuarioEntity.getPassword() != null) {
-                oUsuarioEntityFromDatabase.setPassword(oUsuarioEntity.getPassword());
-            }
-            return oUsuarioRepository.save(oUsuarioEntityFromDatabase);
-        } else {
-            throw new UnauthorizedAccessException("No tienes permisos para modificar el usuario");
+
+        UsuarioEntity oUsuarioEntityFromDatabase = oUsuarioRepository.findById(oUsuarioEntity.getId()).get();
+        if (oUsuarioEntity.getNombre() != null) {
+            oUsuarioEntityFromDatabase.setNombre(oUsuarioEntity.getNombre());
         }
+        if (oUsuarioEntity.getCorreo() != null) {
+            oUsuarioEntityFromDatabase.setCorreo(oUsuarioEntity.getCorreo());
+        }
+        if (oUsuarioEntity.getPassword() != null) {
+            oUsuarioEntityFromDatabase.setPassword(oUsuarioEntity.getPassword());
+        }
+        return oUsuarioRepository.save(oUsuarioEntityFromDatabase);
+
     }
 
     // Eliminar un usuario por ID
     public Long delete(Long id) {
+        if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(id)) {
             oUsuarioRepository.deleteById(id);
             return 1L;
+        } else {
+            throw new UnauthorizedAccessException("No tienes permisos para eliminar la carta");
+        }
     }
 
     public Long deleteAll() {

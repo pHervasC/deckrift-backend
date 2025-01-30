@@ -67,8 +67,12 @@ public class CartaService implements ServiceInterface<CartaEntity> {
 
     // Eliminar una carta por ID
     public Long delete(Long id) {
-        oCartaRepository.deleteById(id);
-        return 1L;
+        if (oAuthService.isAdmin()) {
+            oCartaRepository.deleteById(id);
+            return 1L;
+        } else {
+            throw new UnauthorizedAccessException("No tienes permisos para eliminar la carta");
+        }
     }
 
     // Contar todas las cartas
@@ -87,17 +91,21 @@ public class CartaService implements ServiceInterface<CartaEntity> {
     }
 
     public CartaEntity update(CartaEntity oCartaEntity) {
-        CartaEntity oCartaFromDb = findById(oCartaEntity.getId());
-        if (oCartaEntity.getNombre() != null) {
-            oCartaFromDb.setNombre(oCartaEntity.getNombre());
+        if (oAuthService.isAdmin()) {
+            CartaEntity oCartaFromDb = findById(oCartaEntity.getId());
+            if (oCartaEntity.getNombre() != null) {
+                oCartaFromDb.setNombre(oCartaEntity.getNombre());
+            }
+            if (oCartaEntity.getTipo() != null) {
+                oCartaFromDb.setTipo(oCartaEntity.getTipo());
+            }
+            if (oCartaEntity.getRareza() != null) {
+                oCartaFromDb.setRareza(oCartaEntity.getRareza());
+            }
+            return oCartaRepository.save(oCartaFromDb);
+        } else {
+            throw new UnauthorizedAccessException("No tienes permisos para modificar la carta");
         }
-        if (oCartaEntity.getTipo() != null) {
-            oCartaFromDb.setTipo(oCartaEntity.getTipo());
-        }
-        if (oCartaEntity.getRareza() != null) {
-            oCartaFromDb.setRareza(oCartaEntity.getRareza());
-        }
-        return oCartaRepository.save(oCartaFromDb);
     }
 
     public Page<CartaEntity> getPage(Pageable oPageable, Optional<String> filter) {

@@ -1,5 +1,6 @@
 package com.ausiasmarch.deckrift.api;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
@@ -7,8 +8,10 @@ import java.util.Map;
 
 
 import com.ausiasmarch.deckrift.entity.AuthResponseEntity;
+import com.ausiasmarch.deckrift.entity.TipousuarioEntity;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
+import com.ausiasmarch.deckrift.repository.TipoUsuarioRepository;
 import com.ausiasmarch.deckrift.service.GoogleTokenVerifierService;
 
 
@@ -20,6 +23,9 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*", allowedHeaders = "*", maxAge = 3600)
 public class AuthController {
+
+    @Autowired
+    private TipoUsuarioRepository tipousuarioRepository;
 
     private final GoogleTokenVerifierService googleTokenVerifierService;
     private final UsuarioRepository usuarioRepository;
@@ -44,12 +50,16 @@ public class AuthController {
 
             // Buscar o crear el usuario
             UsuarioEntity usuario = usuarioRepository.findByCorreo(email)
-                    .orElseGet(() -> {
-                        UsuarioEntity newUsuario = new UsuarioEntity();
-                        newUsuario.setNombre((String) payload.get("name"));
-                        newUsuario.setCorreo(email);
-                        return usuarioRepository.save(newUsuario);
-                    });
+    .orElseGet(() -> {
+        UsuarioEntity newUsuario = new UsuarioEntity();
+        newUsuario.setNombre((String) payload.get("name"));
+        newUsuario.setCorreo(email);
+        TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(2L)
+            .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
+        newUsuario.setTipousuario(tipoUsuario);
+
+        return usuarioRepository.save(newUsuario);
+    });
 
             // Generar un JWT
             String jwtToken = JWT.create()

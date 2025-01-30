@@ -1,10 +1,20 @@
 package com.ausiasmarch.deckrift.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "usuario")
 public class UsuarioEntity {
 
@@ -19,60 +29,16 @@ public class UsuarioEntity {
     @NotNull
     @Size(min = 5, max = 100)
     @Column(unique = true)
+    @Email
     private String correo;
 
     @Column(nullable = true) 
     @Size(min = 6, max = 255)
     private String password;
 
+    @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
+    @JoinColumn(name = "id_tipousuario")
+    private TipousuarioEntity tipousuario;
 
-    public UsuarioEntity() {
-    }
-
-    public UsuarioEntity(Long id, String nombre, String correo, String password) {
-        this.id = id;
-        this.nombre = nombre;
-        this.correo = correo;
-        this.password = password;
-    }
-
-    public UsuarioEntity(String nombre, String correo, String password) {
-        this.nombre = nombre;
-        this.correo = correo;
-        this.password = password;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getCorreo() {
-        return correo;
-    }
-
-    public void setCorreo(String correo) {
-        this.correo = correo;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-    
 
 }
