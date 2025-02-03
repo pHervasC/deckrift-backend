@@ -7,12 +7,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ausiasmarch.deckrift.entity.TipousuarioEntity;
+import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
 import com.ausiasmarch.deckrift.repository.TipoUsuarioRepository;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class UsuarioService implements ServiceInterface<UsuarioEntity> {
@@ -29,9 +31,9 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
     @Autowired
     private TipoUsuarioRepository tipousuarioRepository;
 
-    public UsuarioEntity getByEmail(String email) {
-        UsuarioEntity oUsuarioEntity = oUsuarioRepository.findByCorreo(email)
-                .orElseThrow(() -> new ResourceNotFoundException("El usuario con email " + email + " no existe"));
+    public UsuarioEntity getByEmail(String correo) {
+        UsuarioEntity oUsuarioEntity = oUsuarioRepository.findByCorreo(correo)
+                .orElseThrow(() -> new ResourceNotFoundException("El usuario con correo " + correo + " no existe"));
         if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(oUsuarioEntity.getId())) {
             return oUsuarioEntity;
         } else {
@@ -49,8 +51,8 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
         if (oAuthService.isAdmin()) {
             if (filter.isPresent()) {
                 return oUsuarioRepository
-                        .findByNombreContaining(
-                                filter.get(), oPageable);
+                        .findByNombreContainingOrCorreoContaining(
+                                filter.get(),filter.get(), oPageable);
             } else {
                 return oUsuarioRepository.findAll(oPageable);
             }
@@ -60,8 +62,16 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
     }
 
     public UsuarioEntity get(Long id) {
-        return oUsuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(id)) {
+            Optional<UsuarioEntity> usuario = oUsuarioRepository.findById(id);
+            if (usuario.isPresent()) {
+                return usuario.get();
+            } else {
+                throw new EntityNotFoundException("Usuario no encontrado con ID: " + id);
+            }
+        } else {
+            throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
+        }
     }
 
     public Long count() {
@@ -78,10 +88,10 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
 
     // Crear un nuevo usuario
     public UsuarioEntity create(UsuarioEntity oUsuarioEntity) {
-            oUsuarioEntity.setTipousuario(tipousuarioRepository.findById(2L)
-                    .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
-            return oUsuarioRepository.save(oUsuarioEntity);
-        }
+        oUsuarioEntity.setTipousuario(tipousuarioRepository.findById(2L)
+                .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
+        return oUsuarioRepository.save(oUsuarioEntity);
+    }
 
     // Actualizar un usuario existente
     public UsuarioEntity update(UsuarioEntity oUsuarioEntity) {
@@ -118,4 +128,5 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
             return this.count();
         }
     }
+
 }

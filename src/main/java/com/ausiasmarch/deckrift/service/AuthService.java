@@ -1,5 +1,6 @@
 package com.ausiasmarch.deckrift.service;
 
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,30 +45,40 @@ public class AuthService {
     }
 
     public UsuarioEntity getUsuarioFromToken() {
-        if (oHttpServletRequest.getAttribute("correo") == null) {
-            throw new UnauthorizedAccessException("No hay usuario en la sesión");
-        } else {
-            String correo = oHttpServletRequest.getAttribute("correo").toString();
-            return oUsuarioRepository.findByCorreo(correo).get();
-        }  
+    System.out.println("Intentando obtener correo desde request...");
+
+    Enumeration<String> attributeNames = oHttpServletRequest.getAttributeNames();
+    while (attributeNames.hasMoreElements()) {
+        String attributeName = attributeNames.nextElement();
+        System.out.println("Atributo en request: " + attributeName + " -> " + oHttpServletRequest.getAttribute(attributeName));
     }
+
+    Object correoAttr = oHttpServletRequest.getAttribute("correo");
+    System.out.println("Correo recuperado en getUsuarioFromToken: " + correoAttr);
+
+    if (correoAttr == null) {
+        throw new UnauthorizedAccessException("No hay usuario en la sesión");
+    }
+
+    return oUsuarioRepository.findByCorreo(correoAttr.toString())
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+}
 
     public boolean isSessionActive() {
         return oHttpServletRequest.getAttribute("correo") != null;
     }
 
     public boolean isAdmin() {
-        return this.getUsuarioFromToken().getId() == 1L;
+        return this.getUsuarioFromToken().getTipousuario().getId() == 1L;
     }
 
     public boolean isAuditor() {
-        return this.getUsuarioFromToken().getId() == 2L;
+        return this.getUsuarioFromToken().getTipousuario().getId() == 2L;
     }
+
     public boolean isAuditorWithItsOwnData(Long id) {
         UsuarioEntity oUsuarioEntity = this.getUsuarioFromToken();
         return this.isAuditor() && oUsuarioEntity.getId() == id;
     }
-
-    
 
 }

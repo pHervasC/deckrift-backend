@@ -20,24 +20,24 @@ import com.ausiasmarch.deckrift.entity.AlmacenEntity;
 @RestController
 @RequestMapping("/almacen")
 public class Almacen {
-    
+
     @Autowired
     AlmacenService oAlmacenService;
 
     // Agregar cartas a usuario
     @PostMapping("/addCartas/{idUsuario}")
     public ResponseEntity<String> addCartas(
-        @PathVariable Long idUsuario,
-        @RequestParam(defaultValue = "5") int cantidad) {
+            @PathVariable Long idUsuario,
+            @RequestParam(defaultValue = "5") int cantidad) {
         try {
-        oAlmacenService.AñadirCartasAUsuario(idUsuario, cantidad);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Cartas añadidas correctamente al usuario con ID: " + idUsuario);
-    } catch (RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error inesperado: " + e.getMessage());
+            oAlmacenService.AñadirCartasAUsuario(idUsuario, cantidad);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Cartas añadidas correctamente al usuario con ID: " + idUsuario);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error inesperado: " + e.getMessage());
         }
     }
 
@@ -45,11 +45,9 @@ public class Almacen {
     @GetMapping("/cartas/{usuarioId}")
     public ResponseEntity<Page<AlmacenEntity>> getCartasByUsuarioId(
             @PathVariable Long usuarioId,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         Page<AlmacenEntity> page = oAlmacenService.findByUsuarioId(usuarioId, pageable);
         return ResponseEntity.ok(page);
     }
-    
 
 }

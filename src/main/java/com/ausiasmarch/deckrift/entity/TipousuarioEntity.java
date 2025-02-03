@@ -2,6 +2,8 @@ package com.ausiasmarch.deckrift.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -21,6 +23,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "tipousuario")
 public class TipousuarioEntity {
+
+    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

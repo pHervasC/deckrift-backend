@@ -29,6 +29,11 @@ public class Usuario {
     @Autowired
     UsuarioService oUsuarioService;
 
+    @GetMapping("/byemail/{correo}")
+    public ResponseEntity<UsuarioEntity> getUsuarioByEmail(@PathVariable(value = "correo") String correo) {
+        return ResponseEntity.ok(oUsuarioService.getByEmail(correo));
+    }
+
     // Obtener todos los usuarios (con filtro opcional)
     @GetMapping("")
     public ResponseEntity<Page<UsuarioEntity>> getPage(
@@ -58,7 +63,7 @@ public class Usuario {
 
     // Actualizar un usuario existente
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioEntity> update( @RequestBody UsuarioEntity oUsuarioEntity) {
+    public ResponseEntity<UsuarioEntity> update(@RequestBody UsuarioEntity oUsuarioEntity) {
         return new ResponseEntity<>(oUsuarioService.update(oUsuarioEntity), HttpStatus.OK);
     }
 

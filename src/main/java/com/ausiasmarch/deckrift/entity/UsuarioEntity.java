@@ -1,5 +1,8 @@
 package com.ausiasmarch.deckrift.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -32,10 +35,12 @@ public class UsuarioEntity {
     @Email
     private String correo;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = true) 
     @Size(min = 6, max = 255)
     private String password;
 
+    
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "id_tipousuario")
     private TipousuarioEntity tipousuario;

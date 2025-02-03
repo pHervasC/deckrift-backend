@@ -1,4 +1,5 @@
 package com.ausiasmarch.deckrift.api;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -6,14 +7,14 @@ import org.springframework.http.ResponseEntity;
 import java.util.Date;
 import java.util.Map;
 
-
+import com.ausiasmarch.deckrift.bean.LogindataBean;
 import com.ausiasmarch.deckrift.entity.AuthResponseEntity;
 import com.ausiasmarch.deckrift.entity.TipousuarioEntity;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 import com.ausiasmarch.deckrift.repository.TipoUsuarioRepository;
+import com.ausiasmarch.deckrift.service.AuthService;
 import com.ausiasmarch.deckrift.service.GoogleTokenVerifierService;
-
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -27,9 +28,21 @@ public class AuthController {
     @Autowired
     private TipoUsuarioRepository tipousuarioRepository;
 
+    @Autowired
+    AuthService oAuthService;
+
     private final GoogleTokenVerifierService googleTokenVerifierService;
     private final UsuarioRepository usuarioRepository;
     private static final String JWT_SECRET = "clave_secreta";
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LogindataBean oLogindataBean) {
+        if (oAuthService.checkLogin(oLogindataBean)) {
+            return ResponseEntity.ok("\"" + oAuthService.getToken(oLogindataBean.getCorreo()) + "\"");
+        } else {
+            return ResponseEntity.status(401).body("\"" + "Error de autenticación" + "\"");
+        }
+    }
 
     public AuthController(GoogleTokenVerifierService googleTokenVerifierService, UsuarioRepository usuarioRepository) {
         this.googleTokenVerifierService = googleTokenVerifierService;
@@ -46,32 +59,31 @@ public class AuthController {
             GoogleIdToken.Payload payload = googleTokenVerifierService.verifyToken(token);
 
             // Extraer el correo electrónico del payload
-            String email = payload.getEmail();
+            String correo = payload.getEmail();
 
             // Buscar o crear el usuario
-            UsuarioEntity usuario = usuarioRepository.findByCorreo(email)
-    .orElseGet(() -> {
-        UsuarioEntity newUsuario = new UsuarioEntity();
-        newUsuario.setNombre((String) payload.get("name"));
-        newUsuario.setCorreo(email);
-        TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(2L)
-            .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
-        newUsuario.setTipousuario(tipoUsuario);
+            UsuarioEntity usuario = usuarioRepository.findByCorreo(correo)
+                    .orElseGet(() -> {
+                        UsuarioEntity newUsuario = new UsuarioEntity();
+                        newUsuario.setNombre((String) payload.get("name"));
+                        newUsuario.setCorreo(correo);
+                        TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(2L)
+                                .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
+                        newUsuario.setTipousuario(tipoUsuario);
 
-        return usuarioRepository.save(newUsuario);
-    });
+                        return usuarioRepository.save(newUsuario);
+                    });
 
             // Generar un JWT
             String jwtToken = JWT.create()
-                    .withSubject(email)
+                    .withSubject(correo)
                     .withClaim("name", usuario.getNombre())
-                    .withClaim("email", usuario.getCorreo())
+                    .withClaim("correo", usuario.getCorreo())
                     .withExpiresAt(new Date(System.currentTimeMillis() + 3600 * 1000)) // 1 hora
                     .sign(Algorithm.HMAC256(JWT_SECRET));
 
             // Responder al cliente
             return ResponseEntity.ok(new AuthResponseEntity(jwtToken, usuario.getNombre(), usuario.getId()));
-
 
         } catch (RuntimeException e) {
             System.err.println("Error durante el proceso de autenticación:");

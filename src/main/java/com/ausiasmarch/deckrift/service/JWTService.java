@@ -22,7 +22,7 @@ public class JWTService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private SecretKey getSecretKey() {    
+    private SecretKey getSecretKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
@@ -33,8 +33,8 @@ public class JWTService {
                 .subject(SUBJECT)
                 .issuer(ISSUER)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 6000000))
-                .signWith(getSecretKey(), Jwts.SIG.HS256)
+                .expiration(new Date(System.currentTimeMillis() + 6000000)) // Expira en 100 minutos
+                .signWith(getSecretKey())
                 .compact();
     }
 
@@ -42,28 +42,26 @@ public class JWTService {
         return Jwts.parser().verifyWith(getSecretKey()).build().parseSignedClaims(token).getPayload();
     }
 
-    public String validateToken(String sToken) {
-        Claims oClaims = getAllClaimsFromToken(sToken);
+    public String validateToken(String token) {
+        try {
+            Claims claims = getAllClaimsFromToken(token);
 
-        if (oClaims.getExpiration().before(new Date())) {
-            return null;
+            if (claims.getExpiration().before(new Date())) {
+                return null; // Token expirado
+            }
+
+            if (!claims.getIssuer().equals(ISSUER)) {
+                return null; // Emisor inválido
+            }
+
+            if (!claims.getSubject().equals(SUBJECT)) {
+                return null; // Sujeto inválido
+            }
+
+            // Devuelve el correo del usuario si todo es válido
+            return claims.get("correo", String.class);
+        } catch (Exception e) {
+            return null; // Token inválido
         }
-
-        if (oClaims.getIssuedAt().after(new Date())) {
-            return null;
-        }        
-
-        if (!oClaims.getIssuer().equals(ISSUER)) {
-            return null;
-        }
-
-        if (!oClaims.getSubject().equals(SUBJECT)) {
-            return null;
-        }
-        
-        return oClaims.get("email", String.class);
-
     }
-
-    
 }

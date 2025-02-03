@@ -1,7 +1,10 @@
 package com.ausiasmarch.deckrift.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class AuthResponseEntity {
 
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
         private String jwtToken;
         private String name;
         private Long id;
