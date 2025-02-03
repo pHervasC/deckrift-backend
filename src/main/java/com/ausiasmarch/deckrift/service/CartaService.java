@@ -30,20 +30,9 @@ public class CartaService implements ServiceInterface<CartaEntity> {
     }
 
     // Obtener todas las cartas con paginación (y filtro opcional)
-    public Page<CartaEntity> findAll(Pageable oPageable, Optional<String> filter) {
-        if (oAuthService.isAdmin()) {
-            if (filter.isPresent()) {
-                return oCartaRepository
-                        .findByNombreContaining(
-                                filter.get(), oPageable);
-            } else {
+    public Page<CartaEntity> findAll(Pageable oPageable, Optional<String> filter) {  
                 return oCartaRepository.findAll(oPageable);
             }
-        } else {
-            throw new UnauthorizedAccessException("No tienes permisos para ver las Cartas");
-        }
-    }
-
     // Crear una nueva carta
     public CartaEntity create(CartaEntity oCartaEntity) {
         if (oAuthService.isAdmin()) {

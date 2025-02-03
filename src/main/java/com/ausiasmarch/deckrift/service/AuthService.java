@@ -45,24 +45,21 @@ public class AuthService {
     }
 
     public UsuarioEntity getUsuarioFromToken() {
-    System.out.println("Intentando obtener correo desde request...");
 
-    Enumeration<String> attributeNames = oHttpServletRequest.getAttributeNames();
-    while (attributeNames.hasMoreElements()) {
-        String attributeName = attributeNames.nextElement();
-        System.out.println("Atributo en request: " + attributeName + " -> " + oHttpServletRequest.getAttribute(attributeName));
+        Enumeration<String> attributeNames = oHttpServletRequest.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String attributeName = attributeNames.nextElement();
+        }
+
+        Object correoAttr = oHttpServletRequest.getAttribute("correo");
+
+        if (correoAttr == null) {
+            throw new UnauthorizedAccessException("No hay usuario en la sesión");
+        }
+
+        return oUsuarioRepository.findByCorreo(correoAttr.toString())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
-
-    Object correoAttr = oHttpServletRequest.getAttribute("correo");
-    System.out.println("Correo recuperado en getUsuarioFromToken: " + correoAttr);
-
-    if (correoAttr == null) {
-        throw new UnauthorizedAccessException("No hay usuario en la sesión");
-    }
-
-    return oUsuarioRepository.findByCorreo(correoAttr.toString())
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-}
 
     public boolean isSessionActive() {
         return oHttpServletRequest.getAttribute("correo") != null;
