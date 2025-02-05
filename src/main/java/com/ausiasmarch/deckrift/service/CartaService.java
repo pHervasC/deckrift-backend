@@ -21,6 +21,7 @@ public class CartaService implements ServiceInterface<CartaEntity> {
     @Autowired
     RandomService oRandomService;
 
+    @Autowired
     AuthService oAuthService;
 
     // Obtener una carta por ID
@@ -35,11 +36,7 @@ public class CartaService implements ServiceInterface<CartaEntity> {
             }
     // Crear una nueva carta
     public CartaEntity create(CartaEntity oCartaEntity) {
-        if (oAuthService.isAdmin()) {
             return oCartaRepository.save(oCartaEntity);
-        } else {
-            throw new UnauthorizedAccessException("No tienes permisos para crear el usuario");
-        }
     }
 
     // Actualizar una carta existente

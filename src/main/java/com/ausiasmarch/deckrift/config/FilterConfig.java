@@ -23,7 +23,7 @@ public class FilterConfig {
     public FilterRegistrationBean<JWTFilter> jwtFilter() {
         FilterRegistrationBean<JWTFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new JWTFilter(jwtService));
-        registrationBean.addUrlPatterns("/usuario/*", "/admin/*"); // Ajusta las rutas protegidas
+        // registrationBean.addUrlPatterns("/usuario/*", "/admin/*"); // Ajusta las rutas protegidas
         registrationBean.setOrder(1); // Para ejecutarse antes que otros filtros
         return registrationBean;
     }

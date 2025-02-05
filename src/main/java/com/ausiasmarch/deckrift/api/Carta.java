@@ -1,5 +1,6 @@
 package com.ausiasmarch.deckrift.api;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ausiasmarch.deckrift.entity.CartaEntity;
+import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
 import com.ausiasmarch.deckrift.repository.CartaRepository;
 import com.ausiasmarch.deckrift.service.CartaService;
 
@@ -30,14 +33,14 @@ public class Carta {
 
     @Autowired
     CartaService oCartaService;
-    
+
     @Autowired
     private CartaRepository oCartaRepository;
 
     // Obtener todas las cartas (con filtro opcional)
     @GetMapping("")
     public ResponseEntity<Page<CartaEntity>> getPage(
-            Pageable oPageable,  
+            Pageable oPageable,
             @RequestParam Optional<String> filter) {
         return new ResponseEntity<>(oCartaService.findAll(oPageable, filter), HttpStatus.OK);
     }
@@ -47,18 +50,33 @@ public class Carta {
     public ResponseEntity<CartaEntity> getCarta(@PathVariable Long id) {
         return new ResponseEntity<>(oCartaService.findById(id), HttpStatus.OK);
     }
+
     // Eliminar una carta por ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         oCartaService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // Crear una nueva carta
-    @PostMapping("")
-    public ResponseEntity<CartaEntity> create(@RequestBody CartaEntity oCartaEntity) {
-        return new ResponseEntity<>(oCartaService.create(oCartaEntity), HttpStatus.CREATED);
+    @PostMapping("/carta")
+public ResponseEntity<CartaEntity> createCarta(
+    @RequestParam("nombre") String nombre,
+    @RequestParam("tipo") String tipo,
+    @RequestParam("rareza") String rareza,
+    @RequestParam("imagen") MultipartFile imagen) {
+    try {
+        CartaEntity nuevaCarta = new CartaEntity();
+        nuevaCarta.setNombre(nombre);
+        nuevaCarta.setTipo(tipo);
+        nuevaCarta.setRareza(rareza);
+        nuevaCarta.setImagen(imagen.getBytes());
+
+        CartaEntity cartaCreada = oCartaService.create(nuevaCarta);
+        return ResponseEntity.ok(cartaCreada);
+    } catch (IOException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
+}
 
     // Actualizar una carta existente
     @PutMapping("/{id}")
@@ -69,10 +87,10 @@ public class Carta {
     @GetMapping("/{id}/imagen")
     public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long id) {
         CartaEntity oCartaEntity = oCartaRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Carta no encontrada"));
-    return ResponseEntity.ok()
-            .contentType(MediaType.IMAGE_PNG)
-            .body(oCartaEntity.getImagen());
-}
+                .orElseThrow(() -> new RuntimeException("Carta no encontrada"));
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(oCartaEntity.getImagen());
+    }
 
 }
