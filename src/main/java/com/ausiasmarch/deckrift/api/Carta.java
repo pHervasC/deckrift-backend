@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ausiasmarch.deckrift.entity.CartaEntity;
-import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
 import com.ausiasmarch.deckrift.repository.CartaRepository;
 import com.ausiasmarch.deckrift.service.CartaService;
 
@@ -80,9 +79,29 @@ public ResponseEntity<CartaEntity> createCarta(
 
     // Actualizar una carta existente
     @PutMapping("/{id}")
-    public ResponseEntity<CartaEntity> update(@PathVariable Long id, @RequestBody CartaEntity oCartaEntity) {
-        return new ResponseEntity<>(oCartaService.update(id, oCartaEntity), HttpStatus.OK);
-    }
+    public ResponseEntity<CartaEntity> updateCarta(
+        @PathVariable Long id,
+        @RequestParam("nombre") String nombre,
+        @RequestParam("tipo") String tipo,
+        @RequestParam("rareza") String rareza,
+        @RequestParam(value = "imagen", required = false) MultipartFile imagen) {
+        try {
+            CartaEntity cartaExistente = oCartaService.findById(id);
+    
+            cartaExistente.setNombre(nombre);
+            cartaExistente.setTipo(tipo);
+            cartaExistente.setRareza(rareza);
+    
+            if (imagen != null && !imagen.isEmpty()) {
+                cartaExistente.setImagen(imagen.getBytes());
+            }
+    
+            CartaEntity cartaActualizada = oCartaService.update(cartaExistente);
+            return ResponseEntity.ok(cartaActualizada);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }   
+}
 
     @GetMapping("/{id}/imagen")
     public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long id) {

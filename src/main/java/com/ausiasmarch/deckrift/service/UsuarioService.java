@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
+import com.ausiasmarch.deckrift.entity.TipousuarioEntity;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
@@ -92,6 +93,20 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
         return oUsuarioRepository.save(oUsuarioEntity);
     }
+
+    public UsuarioEntity adminCreate(UsuarioEntity oUsuarioEntity) {
+    // Obtener el tipo de usuario por su ID
+    Long tipoId = oUsuarioEntity.getTipousuario().getId();
+    TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(tipoId)
+            .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado con ID: " + tipoId));
+
+    // Asignar el tipo de usuario al usuario
+    oUsuarioEntity.setTipousuario(tipoUsuario);
+
+    // Guardar y devolver el usuario creado
+    return oUsuarioRepository.save(oUsuarioEntity);
+}
+
 
     // Actualizar un usuario existente
     public UsuarioEntity update(UsuarioEntity oUsuarioEntity) {
