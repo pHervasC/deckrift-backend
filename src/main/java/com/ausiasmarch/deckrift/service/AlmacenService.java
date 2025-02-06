@@ -1,5 +1,7 @@
 package com.ausiasmarch.deckrift.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,26 +133,33 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
         return oAlmacenRepository.findById((long) oRandomService.getRandomInt(1, (int) (long) this.count())).get();
     }
 
-    public void AñadirCartasAUsuario(Long idUsuario, int cantidad) {
-        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
+    public List<CartaEntity> AñadirCartasAUsuario(Long idUsuario, int cantidad) {
+    UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
 
-        for (int i = 0; i < cantidad; i++) {
-            CartaEntity carta = oCartaRepository.GetRandomCard();
-            AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(idUsuario, carta.getId());
+    List<CartaEntity> cartasAñadidas = new ArrayList<>();
 
-            if (almacenExistente != null) {
-                almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
-                oAlmacenRepository.save(almacenExistente);
-            } else {
-                AlmacenEntity almacen = new AlmacenEntity();
-                almacen.setUsuario(usuario);
-                almacen.setCarta(carta);
-                almacen.setCantidad(1);
-                oAlmacenRepository.save(almacen);
-            }
+    for (int i = 0; i < cantidad; i++) {
+        CartaEntity carta = oCartaRepository.GetRandomCard();
+        AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(idUsuario, carta.getId());
+
+        if (almacenExistente != null) {
+            almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
+            oAlmacenRepository.save(almacenExistente);
+        } else {
+            AlmacenEntity almacen = new AlmacenEntity();
+            almacen.setUsuario(usuario);
+            almacen.setCarta(carta);
+            almacen.setCantidad(1);
+            oAlmacenRepository.save(almacen);
         }
+
+        cartasAñadidas.add(carta);  // Guardamos la carta para enviarla al frontend
     }
+
+    return cartasAñadidas;
+}
+
 
     public void addCarta(Long usuarioId, Long cartaId) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)

@@ -2,6 +2,7 @@ package com.ausiasmarch.deckrift.api;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ausiasmarch.deckrift.service.AlmacenService;
 import com.ausiasmarch.deckrift.entity.AlmacenEntity;
+import com.ausiasmarch.deckrift.entity.CartaEntity;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*", maxAge = 3600)
 @RestController
@@ -32,20 +34,19 @@ public class Almacen {
 
     // Agregar cartas a usuario
     @PostMapping("/addCartas/{idUsuario}")
-    public ResponseEntity<String> addCartas(
-            @PathVariable Long idUsuario,
-            @RequestParam(defaultValue = "5") int cantidad) {
-        try {
-            oAlmacenService.AñadirCartasAUsuario(idUsuario, cantidad);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Cartas añadidas correctamente al usuario con ID: " + idUsuario);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error inesperado: " + e.getMessage());
-        }
+public ResponseEntity<List<CartaEntity>> addCartas(
+        @PathVariable Long idUsuario,
+        @RequestParam(defaultValue = "5") int cantidad) {
+    try {
+        List<CartaEntity> cartas = oAlmacenService.AñadirCartasAUsuario(idUsuario, cantidad);
+        return ResponseEntity.status(HttpStatus.CREATED).body(cartas);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.emptyList());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
     }
+}
+
 
     // Ver cartas de cada usuario
     @GetMapping("/cartas/{usuarioId}")
