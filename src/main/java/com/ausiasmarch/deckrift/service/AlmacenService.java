@@ -30,14 +30,26 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-   //Crear
+    @Autowired
+    AuthService oAuthService;
+
+    // Crear
 
     public AlmacenEntity create(AlmacenEntity oAlmacenEntity) {
         return oAlmacenRepository.save(oAlmacenEntity);
     }
 
+    public Long deleteByUsuarioAndCarta(Long usuarioId, Long cartaId) {
+        AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(usuarioId, cartaId);
+        if (almacenExistente != null) {
+            oAlmacenRepository.delete(almacenExistente);
+            return 1L;
+        } else {
+            throw new RuntimeException("No se encontró la carta en el almacén del usuario.");
+        }
+    }
 
-    //Delete
+    // Delete
     public Long delete(Long id) {
         oAlmacenRepository.deleteById(id);
         return 1L;
@@ -48,40 +60,63 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
                 .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
     }
 
-    public Page<AlmacenEntity> findByUsuarioId(Long usuarioId, Pageable pageable) {
-        return oAlmacenRepository.findByUsuarioIdNative(usuarioId, pageable);
+    public Page<AlmacenEntity> findByUsuarioId(Long usuarioId, Pageable pageable, Optional<String> filter) {
+        Page<Object[]> rawResults;
+        
+        if (filter.isPresent() && !filter.get().isEmpty()) {
+            rawResults = oAlmacenRepository.findByUsuarioIdAndCartaNombreContaining(usuarioId, filter.get(), pageable);
+        } else {
+            return oAlmacenRepository.findByUsuarioId(usuarioId, pageable);
+        }
+    
+        // Convertimos los resultados a entidades de AlmacenEntity
+        return rawResults.map(obj -> {
+            AlmacenEntity almacen = new AlmacenEntity();
+            almacen.setId(((Number) obj[0]).longValue());
+            almacen.setCantidad(((Number) obj[3]).intValue());
+    
+            CartaEntity carta = new CartaEntity();
+            carta.setId(((Number) obj[4]).longValue());
+            carta.setNombre((String) obj[5]);
+            carta.setTipo((String) obj[6]);
+            carta.setRareza((String) obj[7]);
+            almacen.setCarta(carta);
+    
+            return almacen;
+        });
     }
+    
     
 
     public AlmacenEntity get(Long id) {
         return oAlmacenRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
     }
 
     public Long count() {
         return oAlmacenRepository.count();
     }
 
-    //Update
+    // Update
     public AlmacenEntity update(AlmacenEntity oAlmacenEntity) {
         AlmacenEntity oAlmacenFromDb = findById(oAlmacenEntity.getId());
-    if (oAlmacenEntity.getUsuario() != null) {
-        oAlmacenFromDb.setUsuario(oAlmacenEntity.getUsuario()); 
-    }
-    if (oAlmacenEntity.getCarta() != null) {
-        oAlmacenFromDb.setCarta(oAlmacenEntity.getCarta());
-    }
-    if (oAlmacenEntity.getCantidad() != null) {
-        oAlmacenFromDb.setCantidad(oAlmacenEntity.getCantidad());
-    }
-    return oAlmacenRepository.save(oAlmacenFromDb);
+        if (oAlmacenEntity.getUsuario() != null) {
+            oAlmacenFromDb.setUsuario(oAlmacenEntity.getUsuario());
+        }
+        if (oAlmacenEntity.getCarta() != null) {
+            oAlmacenFromDb.setCarta(oAlmacenEntity.getCarta());
+        }
+        if (oAlmacenEntity.getCantidad() != null) {
+            oAlmacenFromDb.setCantidad(oAlmacenEntity.getCantidad());
+        }
+        return oAlmacenRepository.save(oAlmacenFromDb);
     }
 
     public Page<AlmacenEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
             return oAlmacenRepository
                     .findAll(
-                          oPageable);
+                            oPageable);
         } else {
             return oAlmacenRepository.findAll(oPageable);
         }
@@ -98,7 +133,7 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
 
     public void AñadirCartasAUsuario(Long idUsuario, int cantidad) {
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
-        .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
 
         for (int i = 0; i < cantidad; i++) {
             CartaEntity carta = oCartaRepository.GetRandomCard();
@@ -114,6 +149,28 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
                 almacen.setCantidad(1);
                 oAlmacenRepository.save(almacen);
             }
+        }
     }
+
+    public void addCarta(Long usuarioId, Long cartaId) {
+        UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        
+        CartaEntity carta = oCartaRepository.findById(cartaId)
+            .orElseThrow(() -> new RuntimeException("Carta no encontrada con ID: " + cartaId));
+    
+        AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(usuarioId, cartaId);
+    
+        if (almacenExistente != null) {
+            almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
+            oAlmacenRepository.save(almacenExistente);
+        } else {
+            AlmacenEntity almacen = new AlmacenEntity();
+            almacen.setUsuario(usuario);
+            almacen.setCarta(carta);
+            almacen.setCantidad(1);
+            oAlmacenRepository.save(almacen);
+        }
     }
+
 }

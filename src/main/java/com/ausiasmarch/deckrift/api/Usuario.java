@@ -61,19 +61,20 @@ public class Usuario {
         return new ResponseEntity<>(oUsuarioService.create(oUsuarioEntity), HttpStatus.CREATED);
     }
 
-    //Crear usuario siendo admin
+    // Crear usuario siendo admin
     @PostMapping("/admin-create")
-public ResponseEntity<UsuarioEntity> adminCreate(@RequestBody UsuarioEntity oUsuarioEntity) {
-    // Verificar que se ha enviado un tipo de usuario
-    if (oUsuarioEntity.getTipousuario() == null || oUsuarioEntity.getTipousuario().getId() == null) {
-        throw new RuntimeException("El tipo de usuario es obligatorio.");
+    public ResponseEntity<UsuarioEntity> createAdmin(@RequestBody UsuarioEntity oUsuarioEntity) {
+        System.out.println("Datos recibidos: " + oUsuarioEntity);
+
+        // Validar que el tipo de usuario esté presente
+        if (oUsuarioEntity.getTipousuario() == null || oUsuarioEntity.getTipousuario().getId() == null) {
+            throw new RuntimeException("El tipo de usuario es obligatorio.");
+        }
+
+        // Guardar el usuario con el tipo de usuario asignado correctamente
+        UsuarioEntity createdUsuario = oUsuarioService.adminCreate(oUsuarioEntity);
+        return new ResponseEntity<>(createdUsuario, HttpStatus.CREATED);
     }
-
-    // Lógica de creación delegada al servicio
-    UsuarioEntity nuevoUsuario = oUsuarioService.adminCreate(oUsuarioEntity);
-    return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
-}
-
 
     // Actualizar un usuario existente
     @PutMapping("/{id}")

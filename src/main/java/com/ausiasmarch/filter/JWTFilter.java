@@ -58,7 +58,6 @@ public class JWTFilter implements Filter {
             return;
         }
 
-        System.out.println("Correo configurado en el request: " + correo);
         oHttpServletRequest.setAttribute("correo", correo);
         oFilterChain.doFilter(oServletRequest, oServletResponse);
     }

@@ -31,9 +31,14 @@ public class CartaService implements ServiceInterface<CartaEntity> {
     }
 
     // Obtener todas las cartas con paginación (y filtro opcional)
-    public Page<CartaEntity> findAll(Pageable oPageable, Optional<String> filter) {  
-                return oCartaRepository.findAll(oPageable);
-            }
+    public Page<CartaEntity> findAll(Pageable oPageable, Optional<String> filter) {
+        if (filter.isPresent()) {
+            return oCartaRepository.findByNombreContaining(filter.get(), oPageable);
+        } else {
+            return oCartaRepository.findAll(oPageable);
+        }
+    }
+    
     // Crear una nueva carta
     public CartaEntity create(CartaEntity oCartaEntity) {
         if (oAuthService.isAdmin()) {
