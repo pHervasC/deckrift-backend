@@ -98,6 +98,4 @@ public ResponseEntity<Map<String, Object>> addCarta(
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
-
-
 }

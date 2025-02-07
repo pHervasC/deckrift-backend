@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.entity.TipousuarioEntity;
 import com.ausiasmarch.deckrift.entity.UsuarioEntity;
-import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
 import com.ausiasmarch.deckrift.exception.UnauthorizedAccessException;
 import com.ausiasmarch.deckrift.repository.TipoUsuarioRepository;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
@@ -44,8 +43,12 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
 
     // Obtener un usuario por ID
     public UsuarioEntity findById(Long id) {
+        if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(id)) {
         return oUsuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+            } else {
+                throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
+            }
     }
 
     public Page<UsuarioEntity> getPage(Pageable oPageable, Optional<String> filter) {
@@ -95,23 +98,28 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
     }
 
     public UsuarioEntity adminCreate(UsuarioEntity oUsuarioEntity) {
+        if (oAuthService.isAdmin()) {
         // Verificar si el ID de tipo de usuario es válido
         Long tipoId = oUsuarioEntity.getTipousuario().getId();
         TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(tipoId)
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado con ID: " + tipoId));
-
         // Asignar el tipo de usuario al usuario
         oUsuarioEntity.setTipousuario(tipoUsuario);
-
         // Guardar y devolver el usuario creado
         return oUsuarioRepository.save(oUsuarioEntity);
+    } else {
+        throw new UnauthorizedAccessException("No tienes permisos para ver los usuarios");
+    }
     }
 
 
     // Actualizar un usuario existente
     public UsuarioEntity update(UsuarioEntity oUsuarioEntity) {
 
+        if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(oUsuarioEntity.getId())) {
+
         UsuarioEntity oUsuarioEntityFromDatabase = oUsuarioRepository.findById(oUsuarioEntity.getId()).get();
+
         if (oUsuarioEntity.getNombre() != null) {
             oUsuarioEntityFromDatabase.setNombre(oUsuarioEntity.getNombre());
         }
@@ -123,6 +131,9 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
         }
         return oUsuarioRepository.save(oUsuarioEntityFromDatabase);
 
+      }  else {
+            throw new UnauthorizedAccessException("No tienes permisos para ver los usuarios");
+        }
     }
 
     // Eliminar un usuario por ID
