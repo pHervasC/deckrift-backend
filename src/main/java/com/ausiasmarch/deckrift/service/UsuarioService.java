@@ -129,6 +129,11 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
         if (oUsuarioEntity.getPassword() != null) {
             oUsuarioEntityFromDatabase.setPassword(oUsuarioEntity.getPassword());
         }
+
+        if (oUsuarioEntity.getTipousuario() == null) {
+            oUsuarioEntity.setTipousuario(oUsuarioEntityFromDatabase.getTipousuario());
+        }
+
         return oUsuarioRepository.save(oUsuarioEntityFromDatabase);
 
       }  else {
