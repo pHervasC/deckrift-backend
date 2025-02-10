@@ -130,10 +130,12 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
             oUsuarioEntityFromDatabase.setPassword(oUsuarioEntity.getPassword());
         }
 
-        if (oUsuarioEntity.getTipousuario() == null) {
-            oUsuarioEntity.setTipousuario(oUsuarioEntityFromDatabase.getTipousuario());
+        if (oUsuarioEntity.getTipousuario() != null && oUsuarioEntity.getTipousuario().getId() != null) {
+            TipousuarioEntity tipousuario = new TipousuarioEntity();
+            tipousuario.setId(oUsuarioEntity.getTipousuario().getId());
+            oUsuarioEntityFromDatabase.setTipousuario(tipousuario);
         }
-
+        
         return oUsuarioRepository.save(oUsuarioEntityFromDatabase);
 
       }  else {

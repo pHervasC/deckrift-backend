@@ -74,6 +74,27 @@ public ResponseEntity<List<CartaEntity>> addCartas(
     }
 }
 
+@DeleteMapping("/delete/all/{usuarioId}/{cartaId}")
+public ResponseEntity<Map<String, String>> deleteAllCarta(
+    @PathVariable Long usuarioId, 
+    @PathVariable Long cartaId) {
+try {
+    oAlmacenService.deleteAllByUsuarioAndCarta(usuarioId, cartaId);
+    return ResponseEntity.ok(Collections.singletonMap("message", "Carta eliminada correctamente."));
+} catch (RuntimeException e) {
+    System.err.println("Error al eliminar la carta: " + e.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Collections.singletonMap("error", e.getMessage()));
+}
+}
+
+@DeleteMapping("/usuario/{usuarioId}/vaciar")
+public ResponseEntity<Long> vaciarColeccion(@PathVariable Long usuarioId) {
+    Long eliminadas = oAlmacenService.vaciarColeccion(usuarioId);
+    return new ResponseEntity<>(eliminadas, HttpStatus.OK);
+}
+
+
 @PostMapping("/add/{usuarioId}/{cartaId}")
 public ResponseEntity<Map<String, Object>> addCarta(
         @PathVariable Long usuarioId, 

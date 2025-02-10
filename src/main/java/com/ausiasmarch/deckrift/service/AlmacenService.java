@@ -18,6 +18,8 @@ import com.ausiasmarch.deckrift.repository.AlmacenRepository;
 import com.ausiasmarch.deckrift.repository.CartaRepository;
 import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class AlmacenService implements ServiceInterface<AlmacenEntity> {
 
@@ -44,6 +46,24 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
 
     public Long deleteByUsuarioAndCarta(Long usuarioId, Long cartaId) {
         AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(usuarioId, cartaId);
+
+        if (almacenExistente != null) {
+            // Verifica la cantidad
+            if (almacenExistente.getCantidad() > 1) {
+                // Resta uno a la cantidad
+                almacenExistente.setCantidad(almacenExistente.getCantidad() - 1);
+                oAlmacenRepository.save(almacenExistente);
+            } else {
+                oAlmacenRepository.delete(almacenExistente);
+            }
+            return 1L;
+        } else {
+            throw new RuntimeException("No se encontró la carta en el almacén del usuario.");
+        }
+    }
+
+    public Long deleteAllByUsuarioAndCarta(Long usuarioId, Long cartaId) {
+        AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(usuarioId, cartaId);
         if (almacenExistente != null) {
             oAlmacenRepository.delete(almacenExistente);
             return 1L;
@@ -58,6 +78,26 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
         return 1L;
     }
 
+    // DeleteAll
+    @Transactional
+    public Long vaciarColeccion(Long usuarioId) {
+        if (oAuthService.isAdmin()) {
+            // Obtenemos todas las cartas del usuario usando findByUsuarioId
+            Page<AlmacenEntity> cartasDelUsuario = oAlmacenRepository.findByUsuarioId(usuarioId, Pageable.unpaged());
+
+            // Verificamos si existen cartas en la colección
+            if (!cartasDelUsuario.isEmpty()) {
+                // Eliminamos todas las cartas del usuario
+                oAlmacenRepository.deleteAll(cartasDelUsuario.getContent());
+                return (long) cartasDelUsuario.getContent().size();
+            } else {
+                throw new RuntimeException("No se encontraron cartas en la colección del usuario.");
+            }
+        } else {
+            throw new UnauthorizedAccessException("No tienes permisos para vaciar la colección de este usuario.");
+        }
+    }
+
     public AlmacenEntity findById(Long id) {
         return oAlmacenRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Carta no encontrada con id: " + id));
@@ -66,33 +106,32 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
     public Page<AlmacenEntity> findByUsuarioId(Long usuarioId, Pageable pageable, Optional<String> filter) {
         Page<Object[]> rawResults;
         if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(usuarioId)) {
-        if (filter.isPresent() && !filter.get().isEmpty()) {
-            rawResults = oAlmacenRepository.findByUsuarioIdAndCartaNombreContaining(usuarioId, filter.get(), pageable);
-        } else {
-            return oAlmacenRepository.findByUsuarioId(usuarioId, pageable);
-        }
+            if (filter.isPresent() && !filter.get().isEmpty()) {
+                rawResults = oAlmacenRepository.findByUsuarioIdAndCartaNombreContaining(usuarioId, filter.get(),
+                        pageable);
+            } else {
+                return oAlmacenRepository.findByUsuarioId(usuarioId, pageable);
+            }
         } else {
             throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
         }
-    
+
         // Convertimos los resultados a entidades de AlmacenEntity
         return rawResults.map(obj -> {
             AlmacenEntity almacen = new AlmacenEntity();
             almacen.setId(((Number) obj[0]).longValue());
             almacen.setCantidad(((Number) obj[3]).intValue());
-    
+
             CartaEntity carta = new CartaEntity();
             carta.setId(((Number) obj[4]).longValue());
             carta.setNombre((String) obj[5]);
             carta.setTipo((String) obj[6]);
             carta.setRareza((String) obj[7]);
             almacen.setCarta(carta);
-    
+
             return almacen;
         });
     }
-    
-    
 
     public AlmacenEntity get(Long id) {
         return oAlmacenRepository.findById(id)
@@ -138,59 +177,57 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
     }
 
     public List<CartaEntity> AñadirCartasAUsuario(Long idUsuario, int cantidad) {
-    UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
-            if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(idUsuario)) {
-    List<CartaEntity> cartasAñadidas = new ArrayList<>();
-    for (int i = 0; i < cantidad; i++) {
-        CartaEntity carta = oCartaRepository.GetRandomCard();
-        AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(idUsuario, carta.getId());
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
+        if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(idUsuario)) {
+            List<CartaEntity> cartasAñadidas = new ArrayList<>();
+            for (int i = 0; i < cantidad; i++) {
+                CartaEntity carta = oCartaRepository.GetRandomCard();
+                AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(idUsuario, carta.getId());
 
-        if (almacenExistente != null) {
-            almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
-            oAlmacenRepository.save(almacenExistente);
+                if (almacenExistente != null) {
+                    almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
+                    oAlmacenRepository.save(almacenExistente);
+                } else {
+                    AlmacenEntity almacen = new AlmacenEntity();
+                    almacen.setUsuario(usuario);
+                    almacen.setCarta(carta);
+                    almacen.setCantidad(1);
+                    oAlmacenRepository.save(almacen);
+                }
+
+                cartasAñadidas.add(carta); // Guardamos la carta para enviarla al frontend
+            }
+            return cartasAñadidas;
         } else {
-            AlmacenEntity almacen = new AlmacenEntity();
-            almacen.setUsuario(usuario);
-            almacen.setCarta(carta);
-            almacen.setCantidad(1);
-            oAlmacenRepository.save(almacen);
+            throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
         }
-
-        cartasAñadidas.add(carta);  // Guardamos la carta para enviarla al frontend
     }
-    return cartasAñadidas;
-} else {
-    throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
-}
-}
-
 
     public void addCarta(Long usuarioId, Long cartaId) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
-        
-            if (oAuthService.isAdmin()) {
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
 
-        CartaEntity carta = oCartaRepository.findById(cartaId)
-            .orElseThrow(() -> new RuntimeException("Carta no encontrada con ID: " + cartaId));
-    
-        AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(usuarioId, cartaId);
-    
-        if (almacenExistente != null) {
-            almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
-            oAlmacenRepository.save(almacenExistente);
+        if (oAuthService.isAdmin()) {
+
+            CartaEntity carta = oCartaRepository.findById(cartaId)
+                    .orElseThrow(() -> new RuntimeException("Carta no encontrada con ID: " + cartaId));
+
+            AlmacenEntity almacenExistente = oAlmacenRepository.findByUsuarioIdAndCartaId(usuarioId, cartaId);
+
+            if (almacenExistente != null) {
+                almacenExistente.setCantidad(almacenExistente.getCantidad() + 1);
+                oAlmacenRepository.save(almacenExistente);
+            } else {
+                AlmacenEntity almacen = new AlmacenEntity();
+                almacen.setUsuario(usuario);
+                almacen.setCarta(carta);
+                almacen.setCantidad(1);
+                oAlmacenRepository.save(almacen);
+            }
         } else {
-            AlmacenEntity almacen = new AlmacenEntity();
-            almacen.setUsuario(usuario);
-            almacen.setCarta(carta);
-            almacen.setCantidad(1);
-            oAlmacenRepository.save(almacen);
+            throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
         }
-    } else {
-        throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
     }
-    }
-
 
 }
