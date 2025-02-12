@@ -88,6 +88,7 @@ try {
 }
 }
 
+
 @DeleteMapping("/usuario/{usuarioId}/vaciar")
 public ResponseEntity<Long> vaciarColeccion(@PathVariable Long usuarioId) {
     Long eliminadas = oAlmacenService.vaciarColeccion(usuarioId);
