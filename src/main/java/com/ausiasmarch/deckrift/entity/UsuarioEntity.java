@@ -45,5 +45,8 @@ public class UsuarioEntity {
     @JoinColumn(name = "id_tipousuario")
     private TipousuarioEntity tipousuario;
 
+    @Column(name = "email_verified", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean emailVerified = false;
+
 
 }

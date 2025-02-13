@@ -29,6 +29,9 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
     AuthService oAuthService;
 
     @Autowired
+    EmailService emailService;
+
+    @Autowired
     private TipoUsuarioRepository tipousuarioRepository;
 
     public UsuarioEntity getByEmail(String correo) {
@@ -92,9 +95,17 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
 
     // Crear un nuevo usuario
     public UsuarioEntity create(UsuarioEntity oUsuarioEntity) {
+        
+        oUsuarioEntity.setEmailVerified(false);
+  
         oUsuarioEntity.setTipousuario(tipousuarioRepository.findById(2L)
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
-        return oUsuarioRepository.save(oUsuarioEntity);
+
+        UsuarioEntity savedUser = oUsuarioRepository.save(oUsuarioEntity);
+        
+        emailService.sendVerificationEmail(savedUser.getCorreo());
+    
+        return savedUser;
     }
 
     public UsuarioEntity adminCreate(UsuarioEntity oUsuarioEntity) {
