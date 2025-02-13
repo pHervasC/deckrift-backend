@@ -50,49 +50,45 @@ public class AuthController {
     }
 
     @PostMapping("/google")
-    public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> requestBody) {
-        try {
-            // Extraer el token del cuerpo de la solicitud
-            String token = requestBody.get("token");
-
-            // Verificar el token
-            GoogleIdToken.Payload payload = googleTokenVerifierService.verifyToken(token);
-
-            // Extraer el correo electrónico del payload
-            String correo = payload.getEmail();
-
-            // Buscar o crear el usuario
-            UsuarioEntity usuario = usuarioRepository.findByCorreo(correo)
-                    .orElseGet(() -> {
-                        UsuarioEntity newUsuario = new UsuarioEntity();
-                        newUsuario.setNombre((String) payload.get("name"));
-                        newUsuario.setCorreo(correo);
-                        TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(2L)
-                                .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
-                        newUsuario.setTipousuario(tipoUsuario);
-
-                        return usuarioRepository.save(newUsuario);
-                    });
-
-            // Generar un JWT
-            String jwtToken = JWT.create()
-                    .withSubject(correo)
-                    .withClaim("name", usuario.getNombre())
-                    .withClaim("correo", usuario.getCorreo())
-                    .withExpiresAt(new Date(System.currentTimeMillis() + 3600 * 1000)) // 1 hora
-                    .sign(Algorithm.HMAC256(JWT_SECRET));
-
-            // Responder al cliente
-            return ResponseEntity.ok(new AuthResponseEntity(jwtToken, usuario.getNombre(), usuario.getId()));
-
-        } catch (RuntimeException e) {
-            System.err.println("Error durante el proceso de autenticación:");
-            e.printStackTrace();
-            return ResponseEntity.status(401).body(e.getMessage());
-        } catch (Exception e) {
-            System.err.println("Error inesperado:");
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error interno en el servidor.");
+public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> requestBody) {
+    try {
+        String token = requestBody.get("token");
+        GoogleIdToken.Payload payload = googleTokenVerifierService.verifyToken(token);
+        if (payload == null) {
+            return ResponseEntity.status(401).body("Token inválido");
         }
+
+        String correo = payload.getEmail();
+        UsuarioEntity usuario = usuarioRepository.findByCorreo(correo)
+                .orElseGet(() -> {
+                    UsuarioEntity newUsuario = new UsuarioEntity();
+                    newUsuario.setNombre((String) payload.get("name"));
+                    newUsuario.setCorreo(correo);
+                    TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(2L)
+                            .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
+                    newUsuario.setTipousuario(tipoUsuario);
+
+                    return usuarioRepository.save(newUsuario);
+                });
+
+        String jwtToken = JWT.create()
+                .withSubject(usuario.getCorreo())  // 📌 Ahora usa el mismo "sub" para ambos métodos
+                .withClaim("correo", usuario.getCorreo())
+                .withClaim("tipoUsuario", usuario.getTipousuario().getId())
+                .withExpiresAt(new Date(System.currentTimeMillis() + 3600 * 1000))
+                .sign(Algorithm.HMAC256(JWT_SECRET));
+
+        return ResponseEntity.ok(Map.of(
+                "token", jwtToken,
+                "name", usuario.getNombre(),
+                "id", usuario.getId(),
+                "correo", usuario.getCorreo(),
+                "tipoUsuario", usuario.getTipousuario().getId()
+        ));
+
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body("Error interno en el servidor.");
     }
+}
+
 }

@@ -30,6 +30,7 @@ public class JWTService {
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .claims(claims)
+                .claim("correo", claims.get("correo"))  // 📌 Asegurar que se incluye el correo
                 .subject(SUBJECT)
                 .issuer(ISSUER)
                 .issuedAt(new Date())
@@ -45,23 +46,22 @@ public class JWTService {
     public String validateToken(String token) {
         try {
             Claims claims = getAllClaimsFromToken(token);
-
+        
             if (claims.getExpiration().before(new Date())) {
-                return null; // Token expirado
+                return null;
             }
-
+    
             if (!claims.getIssuer().equals(ISSUER)) {
-                return null; // Emisor inválido
+                return null;
             }
-
+    
             if (!claims.getSubject().equals(SUBJECT)) {
-                return null; // Sujeto inválido
+                return null;
             }
-
-            // Devuelve el correo del usuario si todo es válido
+    
             return claims.get("correo", String.class);
         } catch (Exception e) {
-            return null; // Token inválido
+            return null;
         }
     }
-}
+    }

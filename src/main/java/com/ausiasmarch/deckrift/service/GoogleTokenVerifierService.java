@@ -25,13 +25,17 @@ public class GoogleTokenVerifierService {
     public GoogleIdToken.Payload verifyToken(String token) {
         try {
             GoogleIdToken idToken = verifier.verify(token);
-
             if (idToken != null) {
+                System.out.println("✅ Token verificado correctamente.");
+                System.out.println("📌 Email: " + idToken.getPayload().getEmail());
+                System.out.println("📌 Nombre: " + idToken.getPayload().get("name"));
                 return idToken.getPayload();
             } else {
+                System.out.println("❌ Token inválido: Verificación fallida.");
                 throw new RuntimeException("Token inválido: Verificación fallida.");
             }
         } catch (Exception e) {
+            System.out.println("🚨 Error al verificar el token: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error al verificar el token.", e);
         }
