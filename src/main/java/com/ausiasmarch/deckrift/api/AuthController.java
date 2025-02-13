@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.ausiasmarch.deckrift.bean.LogindataBean;
@@ -15,7 +16,7 @@ import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 import com.ausiasmarch.deckrift.repository.TipoUsuarioRepository;
 import com.ausiasmarch.deckrift.service.AuthService;
 import com.ausiasmarch.deckrift.service.GoogleTokenVerifierService;
-
+import com.ausiasmarch.deckrift.service.JWTService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -30,6 +31,9 @@ public class AuthController {
 
     @Autowired
     AuthService oAuthService;
+
+    @Autowired
+    JWTService jwtService;
 
     private final GoogleTokenVerifierService googleTokenVerifierService;
     private final UsuarioRepository usuarioRepository;
@@ -67,16 +71,15 @@ public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> reques
                     TipousuarioEntity tipoUsuario = tipousuarioRepository.findById(2L)
                             .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
                     newUsuario.setTipousuario(tipoUsuario);
-
                     return usuarioRepository.save(newUsuario);
                 });
 
-        String jwtToken = JWT.create()
-                .withSubject(usuario.getCorreo())  // 📌 Ahora usa el mismo "sub" para ambos métodos
-                .withClaim("correo", usuario.getCorreo())
-                .withClaim("tipoUsuario", usuario.getTipousuario().getId())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 3600 * 1000))
-                .sign(Algorithm.HMAC256(JWT_SECRET));
+        System.out.println("🔑 Generando JWT para Google Login...");
+        Map<String, String> claims = new HashMap<>();
+        claims.put("correo", usuario.getCorreo());
+        claims.put("tipoUsuario", String.valueOf(usuario.getTipousuario().getId()));
+
+        String jwtToken = jwtService.generateToken(claims);  // ⬅️ Ahora usa el mismo método que `AuthService`
 
         return ResponseEntity.ok(Map.of(
                 "token", jwtToken,

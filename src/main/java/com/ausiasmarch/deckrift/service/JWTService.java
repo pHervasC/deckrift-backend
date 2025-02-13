@@ -30,7 +30,6 @@ public class JWTService {
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .claims(claims)
-                .claim("correo", claims.get("correo"))  // 📌 Asegurar que se incluye el correo
                 .subject(SUBJECT)
                 .issuer(ISSUER)
                 .issuedAt(new Date())
