@@ -74,12 +74,11 @@ public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> reques
                     return usuarioRepository.save(newUsuario);
                 });
 
-        System.out.println("🔑 Generando JWT para Google Login...");
         Map<String, String> claims = new HashMap<>();
         claims.put("correo", usuario.getCorreo());
         claims.put("tipoUsuario", String.valueOf(usuario.getTipousuario().getId()));
 
-        String jwtToken = jwtService.generateToken(claims);  // ⬅️ Ahora usa el mismo método que `AuthService`
+        String jwtToken = jwtService.generateToken(claims);
 
         return ResponseEntity.ok(Map.of(
                 "token", jwtToken,

@@ -41,31 +41,21 @@ public class JWTFilter implements Filter {
         String sToken = oHttpServletRequest.getHeader("Authorization");
 
         if (sToken == null) {
-            System.out.println("⛔ No se encontró token en la solicitud.");
             oFilterChain.doFilter(oServletRequest, oServletResponse);
             return;
         }
-
-        System.out.println("🔹 Token recibido en el header: " + sToken);
-
         if (!sToken.startsWith("Bearer ")) {
-            System.out.println("⛔ Token no empieza con 'Bearer '");
             oHttpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no válido");
             return;
         }
 
         String sTokenReal = sToken.substring(7);
-        System.out.println("🔹 Token sin 'Bearer ': " + sTokenReal);
-
         String correo = JWTHelper.validateToken(sTokenReal);
 
         if (correo == null) {
-            System.out.println("🚨 Token inválido, `validateToken` devolvió null.");
             oHttpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no válido");
             return;
         }
-
-        System.out.println("✅ Token válido para usuario: " + correo);
         oHttpServletRequest.setAttribute("correo", correo);
         oFilterChain.doFilter(oServletRequest, oServletResponse);
     }
