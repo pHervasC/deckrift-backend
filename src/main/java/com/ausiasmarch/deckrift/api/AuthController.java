@@ -118,5 +118,4 @@ public ResponseEntity<Void> verifyEmail(@RequestParam String email) {
 }
 
 
-
 }
