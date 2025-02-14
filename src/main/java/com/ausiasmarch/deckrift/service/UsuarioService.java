@@ -102,7 +102,7 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
 
         UsuarioEntity savedUser = oUsuarioRepository.save(oUsuarioEntity);
-        
+
         emailService.sendVerificationEmail(savedUser.getCorreo());
     
         return savedUser;
@@ -116,6 +116,8 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado con ID: " + tipoId));
         // Asignar el tipo de usuario al usuario
         oUsuarioEntity.setTipousuario(tipoUsuario);
+
+        oUsuarioEntity.setEmailVerified(true);
         // Guardar y devolver el usuario creado
         return oUsuarioRepository.save(oUsuarioEntity);
     } else {
