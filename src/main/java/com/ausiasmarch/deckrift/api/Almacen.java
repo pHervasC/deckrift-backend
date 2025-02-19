@@ -54,7 +54,6 @@ public ResponseEntity<List<CartaEntity>> addCartas(
             @PathVariable Long usuarioId,
             Pageable pageable,
             @RequestParam Optional<String> filter) {
-    
         return ResponseEntity.ok(oAlmacenService.findByUsuarioId(usuarioId, pageable, filter));
     }
     

@@ -1,11 +1,16 @@
 package com.ausiasmarch.deckrift.service;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ausiasmarch.deckrift.entity.CartaEntity;
 import com.ausiasmarch.deckrift.exception.ResourceNotFoundException;
@@ -48,6 +53,43 @@ public class CartaService implements ServiceInterface<CartaEntity> {
         }
     }
 
+    public ResponseEntity<?> createCarta(String nombre, String tipo, String rareza, MultipartFile imagen) {
+        try {
+            if (!oAuthService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Collections.singletonMap("error", "No tienes permisos para crear cartas."));
+            }
+            if (nombre == null || nombre.trim().isEmpty() || 
+                tipo == null || tipo.trim().isEmpty() || 
+                rareza == null || rareza.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Collections.singletonMap("error", "Todos los campos son obligatorios."));
+            }
+
+            CartaEntity nuevaCarta = new CartaEntity();
+            nuevaCarta.setNombre(nombre);
+            nuevaCarta.setTipo(tipo);
+            nuevaCarta.setRareza(rareza);
+
+            if (imagen != null && !imagen.isEmpty()) {
+                nuevaCarta.setImagen(imagen.getBytes());
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Collections.singletonMap("error", "Debe incluirse una imagen para la carta."));
+            }
+
+            CartaEntity cartaCreada = oCartaRepository.save(nuevaCarta);
+            return ResponseEntity.status(HttpStatus.CREATED).body(cartaCreada);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error al procesar la imagen."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Ocurrió un error inesperado."));
+        }
+    }
+
     // Eliminar una carta por ID
     public Long delete(Long id) {
         if (oAuthService.isAdmin()) {
@@ -78,6 +120,41 @@ public class CartaService implements ServiceInterface<CartaEntity> {
             return oCartaRepository.save(oCartaEntity);
         } else {
             throw new UnauthorizedAccessException("No tienes permisos para modificar la carta");
+        }
+    }
+
+    public ResponseEntity<?> updateCarta(Long id, String nombre, String tipo, String rareza, MultipartFile imagen) {
+        try {
+            // Verificar permisos de administrador
+            if (!oAuthService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Collections.singletonMap("error", "No tienes permisos para modificar cartas."));
+            }
+
+            // Buscar la carta en la BD
+            CartaEntity cartaExistente = oCartaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Carta no encontrada con ID: " + id));
+
+            // Actualizar los datos
+            cartaExistente.setNombre(nombre);
+            cartaExistente.setTipo(tipo);
+            cartaExistente.setRareza(rareza);
+
+            // Si hay imagen, actualizarla
+            if (imagen != null && !imagen.isEmpty()) {
+                cartaExistente.setImagen(imagen.getBytes());
+            }
+
+            // Guardar cambios
+            CartaEntity cartaActualizada = oCartaRepository.save(cartaExistente);
+            return ResponseEntity.ok(cartaActualizada);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error al procesar la imagen."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Ocurrió un error inesperado."));
         }
     }
 

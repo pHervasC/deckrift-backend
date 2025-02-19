@@ -57,49 +57,24 @@ public class Carta {
     }
 
     @PostMapping("/carta")
-public ResponseEntity<CartaEntity> createCarta(
+    public ResponseEntity<?> createCarta(
     @RequestParam("nombre") String nombre,
     @RequestParam("tipo") String tipo,
     @RequestParam("rareza") String rareza,
-    @RequestParam("imagen") MultipartFile imagen) {
-    try {
-        CartaEntity nuevaCarta = new CartaEntity();
-        nuevaCarta.setNombre(nombre);
-        nuevaCarta.setTipo(tipo);
-        nuevaCarta.setRareza(rareza);
-        nuevaCarta.setImagen(imagen.getBytes());
+    @RequestParam(value = "imagen", required = false) MultipartFile imagen) {
 
-        CartaEntity cartaCreada = oCartaService.create(nuevaCarta);
-        return ResponseEntity.ok(cartaCreada);
-    } catch (IOException e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-    }
+    return oCartaService.createCarta(nombre, tipo, rareza, imagen);
 }
-
     // Actualizar una carta existente
     @PutMapping("/{id}")
-    public ResponseEntity<CartaEntity> updateCarta(
-        @PathVariable Long id,
-        @RequestParam("nombre") String nombre,
-        @RequestParam("tipo") String tipo,
-        @RequestParam("rareza") String rareza,
-        @RequestParam(value = "imagen", required = false) MultipartFile imagen) {
-        try {
-            CartaEntity cartaExistente = oCartaService.findById(id);
-    
-            cartaExistente.setNombre(nombre);
-            cartaExistente.setTipo(tipo);
-            cartaExistente.setRareza(rareza);
-    
-            if (imagen != null && !imagen.isEmpty()) {
-                cartaExistente.setImagen(imagen.getBytes());
-            }
-    
-            CartaEntity cartaActualizada = oCartaService.update(cartaExistente);
-            return ResponseEntity.ok(cartaActualizada);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }   
+public ResponseEntity<?> updateCarta(
+    @PathVariable Long id,
+    @RequestParam("nombre") String nombre,
+    @RequestParam("tipo") String tipo,
+    @RequestParam("rareza") String rareza,
+    @RequestParam(value = "imagen", required = false) MultipartFile imagen) {
+
+    return oCartaService.updateCarta(id, nombre, tipo, rareza, imagen);
 }
 
     @GetMapping("/{id}/imagen")

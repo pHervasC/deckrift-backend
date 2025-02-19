@@ -1,9 +1,13 @@
 package com.ausiasmarch.deckrift.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import com.ausiasmarch.deckrift.entity.UsuarioEntity;
+import com.ausiasmarch.deckrift.repository.UsuarioRepository;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -16,15 +20,17 @@ public class EmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
+    private final UsuarioRepository usuarioRepository;
     private final JavaMailSender mailSender;
 
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender, UsuarioRepository usuarioRepository) {
         this.mailSender = mailSender;
+        this.usuarioRepository = usuarioRepository; // Se añade la inyección del repositorio
     }
 
     public void sendVerificationEmail(String toEmail) {
         String subject = "Verifica tu cuenta";
-        String verificationLink = "http://localhost:4200/verify-email?email=" + toEmail;
+        String verificationLink = "http://localhost:8085/api/auth/verify-email?email=" + toEmail; // Se usa la URL del backend para verificar
 
         String htmlMessage = "<div style='font-family: Arial, sans-serif; text-align: center;'>" +
                 "<h2>¡Bienvenido a DeckRift!</h2>" +
@@ -50,5 +56,23 @@ public class EmailService {
         } catch (MessagingException e) {
             logger.error("❌ Error al enviar el email a " + toEmail, e);
         }
+    }
+
+    public ResponseEntity<Void> verifyEmail(String email) {
+        UsuarioEntity usuario = usuarioRepository.findByCorreo(email)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (usuario.isEmailVerified()) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", "http://localhost:4200/verified")
+                    .build();
+        }
+
+        usuario.setEmailVerified(true);
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header("Location", "http://localhost:4200/verified")
+                .build();
     }
 }
