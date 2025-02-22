@@ -48,7 +48,7 @@ public class UsuarioEntity {
     @Column(name = "email_verified", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean emailVerified = false;
 
-    @Column(name = "monedas", nullable = false)
-    private Integer monedas = 0;
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 10")
+private Integer monedas;
 
 }
