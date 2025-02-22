@@ -229,5 +229,4 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
             throw new UnauthorizedAccessException("No tienes permisos para ver el usuario");
         }
     }
-
 }
