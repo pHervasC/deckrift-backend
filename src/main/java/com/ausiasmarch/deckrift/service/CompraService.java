@@ -27,15 +27,15 @@ public class CompraService {
         }
     }
 
-    public Page<CompraEntity> getCompras(Pageable pageable, String filter) {
-        if (authService.isAdmin()) {
-            if (filter != null && !filter.isEmpty()) {
-                return compraRepository.findByUsuarioCorreoContaining(filter, pageable);
-            } else {
-                return compraRepository.findAll(pageable);
-            }
-        } else {
+    public Page<CompraEntity> getCompras(Pageable pageable, String correo, String estado) {
+        if (!authService.isAdmin()) {
             throw new UnauthorizedAccessException("No tienes permisos para ver las compras");
+        }
+    
+        if ((correo != null && !correo.isEmpty()) || (estado != null && !estado.isEmpty())) {
+            return compraRepository.findByUsuarioCorreoAndEstado(correo, estado, pageable);
+        } else {
+            return compraRepository.findAll(pageable);
         }
     }
 

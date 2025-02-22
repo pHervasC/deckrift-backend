@@ -3,6 +3,7 @@ package com.ausiasmarch.deckrift.api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,9 +30,12 @@ public class CompraController {
     }
 
     @GetMapping("/page")
-    public Page<CompraEntity> getCompras(Pageable pageable, @RequestParam(required = false) String filter) {
-        return compraService.getCompras(pageable, filter);
-    }
+public ResponseEntity<Page<CompraEntity>> getCompras(
+    @RequestParam(required = false) String correo,
+    @RequestParam(required = false) String estado,
+    Pageable pageable) {
+    return ResponseEntity.ok(compraService.getCompras(pageable, correo, estado));
+}
 
     @PostMapping("/create")
     public CompraEntity createCompra(@RequestBody CompraEntity compra) {
