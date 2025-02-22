@@ -101,6 +101,7 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
         oUsuarioEntity.setTipousuario(tipousuarioRepository.findById(2L)
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado")));
 
+        oUsuarioEntity.setMonedas(10);
         UsuarioEntity savedUser = oUsuarioRepository.save(oUsuarioEntity);
 
         emailService.sendVerificationEmail(savedUser.getCorreo());
@@ -116,7 +117,6 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
                 .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado con ID: " + tipoId));
         // Asignar el tipo de usuario al usuario
         oUsuarioEntity.setTipousuario(tipoUsuario);
-
         oUsuarioEntity.setEmailVerified(true);
         // Guardar y devolver el usuario creado
         return oUsuarioRepository.save(oUsuarioEntity);
@@ -147,6 +147,10 @@ public class UsuarioService implements ServiceInterface<UsuarioEntity> {
             TipousuarioEntity tipousuario = new TipousuarioEntity();
             tipousuario.setId(oUsuarioEntity.getTipousuario().getId());
             oUsuarioEntityFromDatabase.setTipousuario(tipousuario);
+        }
+
+        if (oUsuarioEntity.getMonedas() != null) {
+            oUsuarioEntityFromDatabase.setMonedas(oUsuarioEntity.getMonedas());
         }
         
         return oUsuarioRepository.save(oUsuarioEntityFromDatabase);

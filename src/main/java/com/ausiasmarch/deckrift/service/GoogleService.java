@@ -65,6 +65,7 @@ public class GoogleService {
                             .orElseThrow(() -> new RuntimeException("Tipo de usuario no encontrado"));
                     newUsuario.setTipousuario(tipoUsuario);
                     newUsuario.setEmailVerified(true);
+                    newUsuario.setMonedas(10);
                     return usuarioRepository.save(newUsuario);
                 });
 

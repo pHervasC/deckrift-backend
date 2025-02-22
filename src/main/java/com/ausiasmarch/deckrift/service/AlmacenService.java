@@ -36,6 +36,9 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
+    SobresAbiertosService sobresAbiertosService;
+
+    @Autowired
     AuthService oAuthService;
 
     // Crear
@@ -180,6 +183,7 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + idUsuario));
         if (oAuthService.isAdmin() || oAuthService.isAuditorWithItsOwnData(idUsuario)) {
+
             List<CartaEntity> cartasAñadidas = new ArrayList<>();
             for (int i = 0; i < cantidad; i++) {
                 CartaEntity carta = oCartaRepository.GetRandomCard();
@@ -196,7 +200,7 @@ public class AlmacenService implements ServiceInterface<AlmacenEntity> {
                     oAlmacenRepository.save(almacen);
                 }
 
-                cartasAñadidas.add(carta); // Guardamos la carta para enviarla al frontend
+                cartasAñadidas.add(carta);
             }
             return cartasAñadidas;
         } else {

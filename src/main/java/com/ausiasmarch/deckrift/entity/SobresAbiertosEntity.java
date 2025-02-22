@@ -38,4 +38,10 @@ public class SobresAbiertosEntity {
     @Column(nullable = false)
     private int cantidad = 1;
 
+    public SobresAbiertosEntity(UsuarioEntity usuario, LocalDate fecha, int cantidad) {
+        this.usuario = usuario;
+        this.fecha = fecha;
+        this.cantidad = cantidad;
+    }
+
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ausiasmarch.deckrift.service.AlmacenService;
+import com.ausiasmarch.deckrift.service.SobresAbiertosService;
 import com.ausiasmarch.deckrift.entity.AlmacenEntity;
 import com.ausiasmarch.deckrift.entity.CartaEntity;
 
@@ -32,21 +33,50 @@ public class Almacen {
     @Autowired
     AlmacenService oAlmacenService;
 
-    // Agregar cartas a usuario
+    @Autowired
+    SobresAbiertosService sobresAbiertosService;
+
+    // Agregar 5 cartas random a usuario
     @PostMapping("/addCartas/{idUsuario}")
-public ResponseEntity<List<CartaEntity>> addCartas(
+public ResponseEntity<?> addCartas(
         @PathVariable Long idUsuario,
-        @RequestParam(defaultValue = "5") int cantidad) {
+        @RequestParam(defaultValue = "5") int cantidad,
+        @RequestParam(defaultValue = "false") boolean usarMonedas) {
+
     try {
+        // Si no usa monedas, validar límite de sobres
+        if (!usarMonedas && !sobresAbiertosService.puedeAbrirSobre(idUsuario)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Has alcanzado el límite de 2 sobres por día.");
+        }
+
         List<CartaEntity> cartas = oAlmacenService.AñadirCartasAUsuario(idUsuario, cantidad);
+
+        // Registrar apertura solo si no se usaron monedas
+        if (!usarMonedas) {
+            sobresAbiertosService.registrarAperturaSobre(idUsuario, false);
+        } else {
+            sobresAbiertosService.registrarAperturaSobre(idUsuario, true);
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(cartas);
     } catch (RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.emptyList());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("error", e.getMessage()));
     } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", "Error interno del servidor"));
     }
 }
 
+
+@GetMapping("/puedeAbrir/{idUsuario}")
+public ResponseEntity<Boolean> puedeAbrir(@PathVariable Long idUsuario) {
+    try {
+        boolean puedeAbrir = sobresAbiertosService.puedeAbrirSobre(idUsuario);
+        return ResponseEntity.ok(puedeAbrir);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+    }
+}
 
     // Ver cartas de cada usuario
     @GetMapping("/cartas/{usuarioId}")
